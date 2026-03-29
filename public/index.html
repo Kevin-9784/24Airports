@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>24Hub | ATC Operations</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .atis-badge { background: #f59e0b; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body class="p-8">
+    <header class="mb-12 flex justify-between items-center border-b border-slate-700 pb-4">
+        <h1 class="text-3xl font-black tracking-tighter text-blue-400">24HUB <span class="text-slate-500 text-lg">OPERATIONS</span></h1>
+        <div id="atc-count" class="text-sm font-mono bg-slate-800 px-4 py-2 rounded">ATC ONLINE: 0</div>
+    </header>
+
+    <div id="boards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+
+    <script>
+        const socket = io();
+        const boards = document.getElementById('boards');
+
+        socket.on('update', (data) => {
+            document.getElementById('atc-count').innerText = `ATC ONLINE: ${data.controllers.length}`;
+            boards.innerHTML = data.airports.map(apt => `
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold">${apt.icao}</h2>
+                            <p class="text-slate-400 text-xs uppercase tracking-widest">${apt.name}</p>
+                        </div>
+                        <div class="atis-badge">INFO ${apt.atis}</div>
+                    </div>
+                    <div class="text-sm mb-6 text-blue-300 font-mono">${apt.runways}</div>
+                    
+                    <h3 class="text-xs font-bold text-slate-500 mb-2 uppercase">Live Arrivals (${apt.arrivalCount})</h3>
+                    <div class="space-y-2">
+                        ${apt.arrivals.map(a => `
+                            <div class="flex justify-between text-sm bg-slate-900/50 p-2 rounded border border-slate-700/50">
+                                <span><b class="text-blue-400">${a.cs}</b> <small class="text-slate-500">${a.type}</small></span>
+                                <span>${a.dist}nm <span class="text-slate-500">|</span> <b class="text-amber-400">${a.eta}m</b></span>
+                            </div>
+                        `).join('') || '<p class="text-slate-600 italic text-sm">No arrivals inbound</p>'}
+                    </div>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>
